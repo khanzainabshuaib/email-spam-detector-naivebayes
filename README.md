@@ -12,6 +12,13 @@ Designed for industrial training final presentation and evaluation.
 
 ---
 
+#overview
+<img width="1331" height="637" alt="image" src="https://github.com/user-attachments/assets/cc3dd184-3311-47d4-93b6-c0d669f2e1a8" />
+<img width="1334" height="631" alt="image" src="https://github.com/user-attachments/assets/97eae9c6-217d-4d10-b96a-dc030b9d0759" />
+<img width="1341" height="629" alt="image" src="https://github.com/user-attachments/assets/25678829-853b-4b79-af59-cc6991ce46ec" />
+<img width="1365" height="636" alt="image" src="https://github.com/user-attachments/assets/950d6b42-d90d-4fc6-a939-587013041147" />
+
+
 ## 📑 Table of Contents
 1. [Key Features](#-key-features)
 2. [System Architecture & ML Pipeline](#-system-architecture--ml-pipeline)
