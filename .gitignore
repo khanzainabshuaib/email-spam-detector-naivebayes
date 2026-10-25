@@ -1,21 +1,9 @@
-# Python
-__pycache__/
-*.pyc
 
-# Virtual Environment
-venv/
-.env
-
-# Gmail Credentials
+credentials.json
 credentials/
 token.json
-
-# Database
-*.db
-mailguard.db
-
-# VS Code
-.vscode/
-
-# OS
-.DS_Store
+.env
+__pycache__/
+venv/
+.venv/
+*.pyc
