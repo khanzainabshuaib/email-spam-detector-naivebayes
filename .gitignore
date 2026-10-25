@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+.env
+
+# Gmail Credentials
+credentials/
+token.json
+
+# Database
+*.db
+mailguard.db
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store

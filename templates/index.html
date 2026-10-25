@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailGuard AI - Intelligent Email Spam Detection System</title>
+    
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Custom Enterprise Security Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ==============================================
+             DARK NAVY SIDEBAR
+             ============================================== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-icon-box">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>MailGuard AI</h1>
+                    <p>Intelligent Email Spam Detection</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Core Operations</div>
+                <a class="nav-link active" data-view="dashboard" id="nav-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-link" data-view="scanner" id="nav-scanner">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                    <span>Inbox Scanner</span>
+                </a>
+                <a class="nav-link" data-view="records" id="nav-records">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Classification Records</span>
+                    <span class="nav-badge" id="nav-records-count">0</span>
+                </a>
+                <a class="nav-link" data-view="tester" id="nav-tester">
+                    <i class="fa-solid fa-flask-vial"></i>
+                    <span>Live Email Tester</span>
+                </a>
+
+                <div class="nav-section-title">Security & Insights</div>
+                <a class="nav-link" data-view="analytics" id="nav-analytics">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Analytics & Metrics</span>
+                </a>
+                <a class="nav-link" data-view="settings" id="nav-settings">
+                    <i class="fa-solid fa-key"></i>
+                    <span>Gmail OAuth & Config</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-badge-card">
+                    <div class="system-badge-header">
+                        <span class="system-badge-title">ML Engine</span>
+                        <div class="status-dot-pulse" title="Engine Online"></div>
+                    </div>
+                    <div class="system-badge-model" id="engine-model-name">MultinomialNB</div>
+                    <div class="system-badge-detail">TF-IDF Vectorizer • 100% Local Inference</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==============================================
+             MAIN WRAPPER
+             ============================================== -->
+        <div class="main-wrapper">
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <div class="top-nav-left">
+                    <button class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="Toggle Navigation">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h2 class="top-page-title" id="top-title">Dashboard Overview</h2>
+                </div>
+
+                <div class="top-nav-right">
+                    <!-- Live Gmail Status Pill -->
+                    <div class="gmail-status-pill disconnected" id="top-gmail-pill">
+                        <div class="gmail-status-dot"></div>
+                        <span id="top-gmail-text">Gmail Not Connected</span>
+                    </div>
+
+                    <!-- Connect or Scan Quick Action -->
+                    <button class="btn btn-primary btn-sm" id="top-action-btn">
+                        <i class="fa-brands fa-google"></i>
+                        <span>Connect Gmail</span>
+                    </button>
+
+                    <!-- Refresh Button -->
+                    <button class="btn btn-outline btn-sm" id="global-refresh-btn" title="Refresh Application Data">
+                        <i class="fa-solid fa-arrows-rotate" id="refresh-icon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Content Container -->
+            <main class="content-body">
+                <!-- ==========================================
+                     VIEW 1: DASHBOARD
+                     ========================================== -->
+                <section class="app-view active-view" id="view-dashboard">
+                    <!-- Real Statistics Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue">
+                                <i class="fa-solid fa-envelopes-bulk"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-title">Total Analyzed</div>
+                                <div class="stat-value" id="stat-total">0</div>
+                                <div class="stat-subtext"><i class="fa-solid fa-database"></i> Evaluated from actual inbox scans</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon red">
+                                <i class="fa-solid fa-shield-virus"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-title">Spam Detected</div>
+                                <div class="stat-value" id="stat-spam">0</div>
+                                <div class="stat-subtext" style="color: var(--spam-red);"><i class="fa-solid fa-circle-exclamation"></i> Flagged as malicious or spam</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-title">Legitimate (Ham)</div>
+                                <div class="stat-value" id="stat-ham">0</div>
+                                <div class="stat-subtext" style="color: var(--ham-green);"><i class="fa-solid fa-check"></i> Verified legitimate messages</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon purple">
+                                <i class="fa-solid fa-percent"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-title">Spam Ratio</div>
+                                <div class="stat-value" id="stat-pct">0%</div>
+                                <div class="stat-subtext"><i class="fa-solid fa-chart-line"></i> Percentage of analyzed emails</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h3><i class="fa-solid fa-chart-pie" style="color: #2563eb;"></i> Classification Distribution</h3>
+                                    <p>Actual proportion of Spam vs Legitimate emails</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-wrapper">
+                                    <canvas id="dashboardDonutChart"></canvas>
+                                    <div class="chart-empty-state" id="donut-empty-state">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        <p>No email analysis data yet.<br>Scan your inbox or test a sample to see distribution.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h3><i class="fa-solid fa-chart-column" style="color: #2563eb;"></i> Analysis Volume</h3>
+                                    <p>Emails categorized over time</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-wrapper">
+                                    <canvas id="dashboardBarChart"></canvas>
+                                    <div class="chart-empty-state" id="bar-empty-state">
+                                        <i class="fa-solid fa-chart-simple"></i>
+                                        <p>Timeline data will populate as emails are analyzed.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Classifications Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h3><i class="fa-solid fa-clock-rotate-left" style="color: #2563eb;"></i> Recent Email Classifications</h3>
+                                <p>Latest evaluated messages from your actual history</p>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline btn-sm" onclick="switchView('records')">
+                                    <span>View All History</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Email Subject</th>
+                                            <th>Sender</th>
+                                            <th>Received Date</th>
+                                            <th>Predicted Category</th>
+                                            <th>Confidence Score</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboard-recent-tbody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="empty-state" id="dashboard-empty-state" style="display: none;">
+                                <div class="empty-state-icon"><i class="fa-regular fa-folder-open"></i></div>
+                                <h4>No Analyzed Emails Yet</h4>
+                                <p>Authenticate your Gmail account and click "Analyze Inbox" or use the "Live Email Tester" to analyze your first message.</p>
+                                <button class="btn btn-primary btn-sm" onclick="switchView('scanner')">
+                                    <i class="fa-solid fa-inbox"></i> Go to Inbox Scanner
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     VIEW 2: INBOX SCANNER
+                     ========================================== -->
+                <section class="app-view" id="view-scanner">
+                    <div class="view-header">
+                        <div>
+                            <h2>Gmail Inbox Scanner</h2>
+                            <p>Direct integration with your authorized Google Account via Gmail REST API</p>
+                        </div>
+                    </div>
+
+                    <!-- Gmail Connection Card -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                                <div style="display: flex; align-items: center; gap: 16px;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: #ea4335; color: white; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                                        <i class="fa-brands fa-google"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="font-size: 16px; font-weight: 700;" id="scanner-account-name">Google Account Status</h4>
+                                        <p style="font-size: 13px; color: var(--text-muted);" id="scanner-account-desc">Checking connection...</p>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px;" id="scanner-auth-actions">
+                                    <!-- Dynamic auth buttons -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scan Trigger Panel -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h3><i class="fa-solid fa-magnifying-glass-chart" style="color: #2563eb;"></i> Execute Inbox Analysis</h3>
+                                <p>Extracts email headers & body, runs TF-IDF vectorization, and predicts spam probability with MultinomialNB</p>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <label style="font-size: 13.5px; font-weight: 600; color: var(--text-primary);">
+                                    Emails to Fetch:
+                                </label>
+                                <select id="scan-count-select" class="sort-select">
+                                    <option value="5" selected>Latest 5 Emails</option>
+                                    <option value="10">Latest 10 Emails</option>
+                                    <option value="15">Latest 15 Emails</option>
+                                    <option value="20">Latest 20 Emails</option>
+                                </select>
+                                <button class="btn btn-primary" id="start-scan-btn">
+                                    <i class="fa-solid fa-bolt"></i>
+                                    <span>Analyze Inbox Now</span>
+                                </button>
+                            </div>
+
+                            <!-- Live Scan Progress Indicator -->
+                            <div id="scan-progress-box" style="display: none; margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border-light);">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                    <div class="spinner spinner-primary"></div>
+                                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);" id="scan-progress-label">Connecting to Gmail API...</span>
+                                </div>
+                                <div style="height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                                    <div id="scan-progress-bar" style="width: 30%; height: 100%; background: #2563eb; transition: width 0.4s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Batch Results Section -->
+                    <div class="card" id="scanner-results-card">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h3><i class="fa-solid fa-list-check" style="color: #2563eb;"></i> Analysis Results</h3>
+                                <p>Emails evaluated in this scanning session</p>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Email Subject</th>
+                                            <th>Sender</th>
+                                            <th>Received Date</th>
+                                            <th>Predicted Category</th>
+                                            <th>Confidence Score</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scanner-batch-tbody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="empty-state" id="scanner-empty-state">
+                                <div class="empty-state-icon"><i class="fa-solid fa-inbox"></i></div>
+                                <h4>No Active Scan Results</h4>
+                                <p>Select the number of emails and click "Analyze Inbox Now" to fetch live emails directly from Gmail.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     VIEW 3: CLASSIFICATION RECORDS
+                     ========================================== -->
+                <section class="app-view" id="view-records">
+                    <div class="view-header">
+                        <div>
+                            <h2>Classification Records</h2>
+                            <p>Complete historical database of all evaluated emails</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline btn-sm" id="clear-all-history-btn" style="color: var(--spam-red);">
+                                <i class="fa-solid fa-trash-can"></i> Clear History
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- Filter and Search Bar -->
+                            <div class="filter-bar">
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input type="text" id="records-search-input" class="search-input" placeholder="Search by subject, sender, or snippet...">
+                                </div>
+
+                                <div class="filter-actions">
+                                    <div class="category-filter-group">
+                                        <button class="filter-pill active" data-filter="ALL">All (<span id="filter-all-count">0</span>)</button>
+                                        <button class="filter-pill" data-filter="SPAM">Spam (<span id="filter-spam-count">0</span>)</button>
+                                        <button class="filter-pill" data-filter="NOT SPAM">Legitimate (<span id="filter-ham-count">0</span>)</button>
+                                    </div>
+
+                                    <select id="records-sort-select" class="sort-select">
+                                        <option value="date_desc">Date: Newest First</option>
+                                        <option value="date_asc">Date: Oldest First</option>
+                                        <option value="conf_desc">Confidence: Highest First</option>
+                                        <option value="conf_asc">Confidence: Lowest First</option>
+                                        <option value="subject_asc">Subject: A to Z</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Table -->
+                            <div class="table-responsive">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Email Subject</th>
+                                            <th>Sender</th>
+                                            <th>Received Date</th>
+                                            <th>Category</th>
+                                            <th>Confidence Score</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="records-table-tbody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="empty-state" id="records-empty-state" style="display: none;">
+                                <div class="empty-state-icon"><i class="fa-regular fa-folder-open"></i></div>
+                                <h4>No Records Found</h4>
+                                <p>No emails match the selected filters or search query.</p>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="pagination-container" id="records-pagination">
+                                <div>Showing page <span id="current-page-num">1</span> of <span id="total-pages-num">1</span> (<span id="total-records-num">0</span> total records)</div>
+                                <div class="pagination-controls">
+                                    <button class="page-btn" id="prev-page-btn" disabled><i class="fa-solid fa-chevron-left"></i></button>
+                                    <span style="font-weight: 600; padding: 0 8px;" id="page-indicator">1</span>
+                                    <button class="page-btn" id="next-page-btn" disabled><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     VIEW 4: LIVE EMAIL TESTER
+                     ========================================== -->
+                <section class="app-view" id="view-tester">
+                    <div class="view-header">
+                        <div>
+                            <h2>Live Email Security Tester</h2>
+                            <p>Interactive testing sandbox: classify custom email texts using the trained MultinomialNB & TF-IDF model</p>
+                        </div>
+                    </div>
+
+                    <div class="tester-grid">
+                        <!-- Input Form -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h3><i class="fa-solid fa-pen-to-square" style="color: #2563eb;"></i> Email Input Parameters</h3>
+                                    <p>Select a quick preset or compose custom content</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="preset-pills">
+                                    <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); align-self: center;">Presets:</span>
+                                    <button class="preset-pill" onclick="loadTesterPreset('lottery')">🎁 Lottery Scam</button>
+                                    <button class="preset-pill" onclick="loadTesterPreset('bank')">🏦 Bank Phishing</button>
+                                    <button class="preset-pill" onclick="loadTesterPreset('crypto')">💰 Urgent Crypto</button>
+                                    <button class="preset-pill" onclick="loadTesterPreset('meeting')">📅 Team Meeting (Ham)</button>
+                                    <button class="preset-pill" onclick="loadTesterPreset('university')">🎓 College Notice (Ham)</button>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="tester-subject">Email Subject</label>
+                                    <input type="text" id="tester-subject" class="form-input" placeholder="e.g. Urgent Notice: Your account will be locked...">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="tester-sender">Sender Name or Address</label>
+                                    <input type="text" id="tester-sender" class="form-input" placeholder="e.g. Security Center <security@service-alerts.com>">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="tester-body">Email Body / Content</label>
+                                    <textarea id="tester-body" class="form-textarea" placeholder="Paste full email body or raw message text here..."></textarea>
+                                </div>
+
+                                <button class="btn btn-primary" id="run-test-btn" style="width: 100%;">
+                                    <i class="fa-solid fa-microchip"></i>
+                                    <span>Run Machine Learning Classification</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Result Inspector Card -->
+                        <div class="result-inspector-card">
+                            <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-magnifying-glass-chart" style="color: #2563eb;"></i> Classification Verdict
+                            </h3>
+
+                            <div id="tester-placeholder-state" style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
+                                <i class="fa-solid fa-robot" style="font-size: 44px; color: #cbd5e1; margin-bottom: 12px;"></i>
+                                <h4 style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Awaiting Input</h4>
+                                <p style="font-size: 13px; margin-top: 4px;">Choose a preset or fill the form on the left, then click "Run Machine Learning Classification".</p>
+                            </div>
+
+                            <div id="tester-result-content" style="display: none;">
+                                <div class="result-verdict-box" id="tester-verdict-box">
+                                    <div class="result-verdict-title" id="tester-verdict-title">
+                                        <!-- Verdict text -->
+                                    </div>
+                                    <div class="result-confidence-metric" id="tester-confidence-metric">
+                                        <!-- Confidence score -->
+                                    </div>
+                                </div>
+
+                                <div class="meter-wrapper">
+                                    <div class="meter-labels">
+                                        <span>Probability Distribution</span>
+                                        <span id="tester-prob-breakdown">Spam: 0% | Ham: 0%</span>
+                                    </div>
+                                    <div class="meter-track">
+                                        <div class="meter-fill" id="tester-meter-fill" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Key Detected Features / Words -->
+                                <div style="margin-top: 20px;">
+                                    <h4 style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">
+                                        <i class="fa-solid fa-fingerprint"></i> High-Impact Tokens in Message:
+                                    </h4>
+                                    <div id="tester-keywords-pills" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                        <!-- Dynamic tokens -->
+                                    </div>
+                                </div>
+
+                                <!-- Explanation & Disclaimer -->
+                                <div class="ml-disclaimer-box">
+                                    <strong><i class="fa-solid fa-triangle-exclamation"></i> Model Estimate Notice:</strong>
+                                    Predictions are probabilistic machine learning inferences generated by the Multinomial Naive Bayes model. Individual confidence reflects posterior class probability, not overall model accuracy.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     VIEW 5: ANALYTICS & METRICS
+                     ========================================== -->
+                <section class="app-view" id="view-analytics">
+                    <div class="view-header">
+                        <div>
+                            <h2>Analytics & Performance Metrics</h2>
+                            <p>Real-time statistical evaluation based strictly on stored analysis records</p>
+                        </div>
+                    </div>
+
+                    <!-- Metrics Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue"><i class="fa-solid fa-calculator"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-title">Analyzed Samples</div>
+                                <div class="stat-value" id="analytics-total">0</div>
+                                <div class="stat-subtext">Cumulative records in SQLite</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon red"><i class="fa-solid fa-gauge-high"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-title">Avg Spam Confidence</div>
+                                <div class="stat-value" id="analytics-spam-conf">0%</div>
+                                <div class="stat-subtext">Posterior probability for spam class</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green"><i class="fa-solid fa-check-double"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-title">Avg Ham Confidence</div>
+                                <div class="stat-value" id="analytics-ham-conf">0%</div>
+                                <div class="stat-subtext">Posterior probability for legitimate class</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon purple"><i class="fa-solid fa-bullseye"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-title">Model Architecture</div>
+                                <div class="stat-value" style="font-size: 20px;">MultinomialNB</div>
+                                <div class="stat-subtext">TF-IDF Feature Representation</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deep Charts -->
+                    <div class="charts-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h3><i class="fa-solid fa-chart-pie" style="color: #2563eb;"></i> Threat Distribution</h3>
+                                    <p>Actual proportion of classified emails</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-wrapper">
+                                    <canvas id="deepDonutChart"></canvas>
+                                    <div class="chart-empty-state" id="deep-donut-empty">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        <p>No records to chart.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h3><i class="fa-solid fa-chart-line" style="color: #2563eb;"></i> Analysis Trends Over Time</h3>
+                                    <p>Daily volume of analyzed spam and legitimate emails</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-wrapper">
+                                    <canvas id="deepTimelineChart"></canvas>
+                                    <div class="chart-empty-state" id="deep-timeline-empty">
+                                        <i class="fa-solid fa-chart-column"></i>
+                                        <p>Timeline data requires at least one email analysis record.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Explanation Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h3><i class="fa-solid fa-diagram-project" style="color: #2563eb;"></i> System Architecture & Pipeline</h3>
+                                <p>End-to-end classification methodology</p>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                                <div style="padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border-light);">
+                                    <div style="font-weight: 700; color: #2563eb; margin-bottom: 4px;">1. Ingestion</div>
+                                    <p style="font-size: 12.5px; color: var(--text-secondary);">Gmail REST API v1 fetches email headers and multipart payload using OAuth 2.0 readonly permissions.</p>
+                                </div>
+                                <div style="padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border-light);">
+                                    <div style="font-weight: 700; color: #2563eb; margin-bottom: 4px;">2. Preprocessing</div>
+                                    <p style="font-size: 12.5px; color: var(--text-secondary);">BeautifulSoup strips HTML tags; regex removes whitespace, invisible Unicode (zero-width characters), and normalizes text.</p>
+                                </div>
+                                <div style="padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border-light);">
+                                    <div style="font-weight: 700; color: #2563eb; margin-bottom: 4px;">3. Vectorization</div>
+                                    <p style="font-size: 12.5px; color: var(--text-secondary);">TfidfVectorizer transforms preprocessed text into sparse numerical vectors with English stop words filter.</p>
+                                </div>
+                                <div style="padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border-light);">
+                                    <div style="font-weight: 700; color: #2563eb; margin-bottom: 4px;">4. Inference</div>
+                                    <p style="font-size: 12.5px; color: var(--text-secondary);">Multinomial Naive Bayes computes log likelihood and posterior class probabilities with Laplace smoothing.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     VIEW 6: GMAIL OAUTH & SETTINGS
+                     ========================================== -->
+                <section class="app-view" id="view-settings">
+                    <div class="view-header">
+                        <div>
+                            <h2>Gmail OAuth & Security Configuration</h2>
+                            <p>Manage Google Cloud credentials, OAuth 2.0 authorization, and security parameters</p>
+                        </div>
+                    </div>
+
+                    <div class="tester-grid">
+                        <!-- Connection Status -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h3><i class="fa-solid fa-shield-halved" style="color: #2563eb;"></i> Authentication Status</h3>
+                                    <p>Current Google OAuth 2.0 session</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="settings-status-details">
+                                    <!-- Dynamic details -->
+                                </div>
+
+                                <div style="margin-top: 24px; display: flex; gap: 10px;" id="settings-auth-buttons">
+                                    <!-- Dynamic buttons -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Credentials File Uploader / Checker -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h3><i class="fa-solid fa-file-code" style="color: #2563eb;"></i> OAuth Credentials Setup</h3>
+                                    <p>Google Cloud Client Secret (credentials.json)</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div style="padding: 14px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border-light); margin-bottom: 18px;">
+                                    <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                                        Credentials File Status:
+                                    </div>
+                                    <div id="creds-file-status" style="font-size: 13px;">Checking...</div>
+                                </div>
+
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">
+                                    Upload your Google Cloud OAuth Client ID JSON file (saved as <code>credentials.json</code>):
+                                </div>
+
+                                <form id="upload-creds-form" style="display: flex; flex-direction: column; gap: 12px;">
+                                    <input type="file" id="creds-file-input" accept=".json" class="form-input" style="padding: 8px;">
+                                    <button type="submit" class="btn btn-outline" id="upload-creds-btn">
+                                        <i class="fa-solid fa-upload"></i> Upload & Install credentials.json
+                                    </button>
+                                </form>
+
+                                <div class="ml-disclaimer-box" style="margin-top: 18px;">
+                                    <strong><i class="fa-solid fa-circle-info"></i> Security Guarantee:</strong>
+                                    All OAuth client secrets and refresh tokens are kept strictly server-side in <code>credentials/</code> and are never exposed to client-side scripts.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ==============================================
+         EMAIL DETAILS MODAL
+         ============================================== -->
+    <div class="modal-overlay" id="email-detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Email Classification Inspection</h3>
+                <button class="modal-close-btn" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" onclick="closeDetailModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- App JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
